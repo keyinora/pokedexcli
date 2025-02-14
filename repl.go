@@ -1,15 +1,64 @@
 package main
 
 import (
+	"bufio"
+	"fmt"
+	"os"
 	"strings"
 	"unicode"
 )
 
-/*
-The purpose of this function will be to split the users input into "words" based on whitespace.
+func startRepl() {
+	scanner := bufio.NewScanner(os.Stdin)
 
-It should also lowercase the input and trim any leading or trailing whitespace. For example:
-*/
+	for {
+		fmt.Print("Pokedex > ")
+		// waits for user to type and press enter
+		scanner.Scan()
+		// gets the text that was typed
+		res := scanner.Text()
+		//split the words
+		words := cleanInput(res)
+		if len(words) == 0 {
+			continue
+		}
+
+		commandName := words[0]
+		if command, exists := getCommands()[commandName]; exists {
+			err := command.callback()
+			if err != nil {
+				fmt.Println(err)
+			}
+			continue
+		} else {
+			fmt.Println("Unknown command")
+			continue
+		}
+	}
+}
+
+/*registry of commands*/
+type cliCommand struct {
+	name        string
+	description string
+	callback    func() error
+}
+
+func getCommands() map[string]cliCommand {
+	return map[string]cliCommand{
+		"help": {
+			name:        "help",
+			description: "Displays a help message",
+			callback:    commandHelp,
+		},
+		"exit": {
+			name:        "exit",
+			description: "Exit the Pokedex",
+			callback:    commandExit,
+		},
+	}
+}
+
 func cleanInput(text string) []string {
 	if text == "" {
 		return []string{}
