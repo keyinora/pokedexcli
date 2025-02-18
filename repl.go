@@ -28,7 +28,10 @@ func startRepl(cfg *config) {
 		}
 
 		commandName := words[0]
-		area_name := words[1]
+		area_name := ""
+		if len(words) > 1 {
+			area_name = words[1]
+		}
 
 		command, exists := getCommands()[commandName]
 		if exists {
@@ -48,14 +51,19 @@ func cleanInput(text string) []string {
 	if text == "" {
 		return []string{}
 	}
+
+	// Convert the text to lowercase
 	message := strings.ToLower(text)
-	// only returns letters and spaces, removes everything else.
+
+	// Remove all characters except letters, numbers, spaces, and dashes
 	message = strings.Map(func(r rune) rune {
-		if unicode.IsLetter(r) || unicode.IsSpace(r) {
+		if unicode.IsLetter(r) || unicode.IsNumber(r) || unicode.IsSpace(r) || r == '-' {
 			return r
 		}
-		return -1
+		return -1 // Remove the character
 	}, message)
+
+	// Split the cleaned message into words
 	return strings.Fields(message)
 }
 
@@ -81,6 +89,11 @@ func getCommands() map[string]cliCommand {
 			name:        "mapb",
 			description: "Get the previous page of locations",
 			callback:    commandMapb,
+		},
+		"explore": {
+			name:        "explore",
+			description: "Explore a specific locations to find pokemon in the area",
+			callback:    commandExplore,
 		},
 		"exit": {
 			name:        "exit",

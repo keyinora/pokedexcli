@@ -28,7 +28,7 @@ func (c *Client) ListLocations(pageURL *string) (RespShallowLocations, error) {
 		}
 		return locationsResp, nil
 	}
-	// Step 2: Network request becuase data is not cached
+	// Step 2: Network request because data is not cached
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return RespShallowLocations{}, err
