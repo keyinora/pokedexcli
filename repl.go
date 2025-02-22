@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"strings"
-	"unicode"
 
 	"github.com/keyinora/pokedexcli/internal/pokeapi"
 )
@@ -14,6 +13,7 @@ type config struct {
 	pokeapiClient    pokeapi.Client
 	nextLocationsURL *string
 	prevLocationsURL *string
+	caughtPokemon    map[string]pokeapi.Pokemon
 }
 
 func startRepl(cfg *config) {
@@ -28,14 +28,14 @@ func startRepl(cfg *config) {
 		}
 
 		commandName := words[0]
-		area_name := ""
+		args := []string{}
 		if len(words) > 1 {
-			area_name = words[1]
+			args = words[1:]
 		}
 
 		command, exists := getCommands()[commandName]
 		if exists {
-			err := command.callback(cfg, area_name)
+			err := command.callback(cfg, args...)
 			if err != nil {
 				fmt.Println(err)
 			}
@@ -48,29 +48,15 @@ func startRepl(cfg *config) {
 }
 
 func cleanInput(text string) []string {
-	if text == "" {
-		return []string{}
-	}
-
-	// Convert the text to lowercase
-	message := strings.ToLower(text)
-
-	// Remove all characters except letters, numbers, spaces, and dashes
-	message = strings.Map(func(r rune) rune {
-		if unicode.IsLetter(r) || unicode.IsNumber(r) || unicode.IsSpace(r) || r == '-' {
-			return r
-		}
-		return -1 // Remove the character
-	}, message)
-
-	// Split the cleaned message into words
-	return strings.Fields(message)
+	output := strings.ToLower(text)
+	words := strings.Fields(output)
+	return words
 }
 
 type cliCommand struct {
 	name        string
 	description string
-	callback    func(*config, string) error
+	callback    func(*config, ...string) error
 }
 
 func getCommands() map[string]cliCommand {
@@ -79,6 +65,27 @@ func getCommands() map[string]cliCommand {
 			name:        "help",
 			description: "Displays a help message",
 			callback:    commandHelp,
+		},
+
+		"pokedex": {
+			name:        "pokedex",
+			description: "view all caught pokemon",
+			callback:    commandPokedex,
+		},
+		"inspect": {
+			name:        "inspect <pokemon_name>",
+			description: "Inspect a caught pokemon",
+			callback:    commandInspect,
+		},
+		"catch": {
+			name:        "catch <pokemon_name>",
+			description: "Attempt to catch a pokemon",
+			callback:    commandCatch,
+		},
+		"explore": {
+			name:        "explore <location_name>",
+			description: "Explore a location",
+			callback:    commandExplore,
 		},
 		"map": {
 			name:        "map",
@@ -89,11 +96,6 @@ func getCommands() map[string]cliCommand {
 			name:        "mapb",
 			description: "Get the previous page of locations",
 			callback:    commandMapb,
-		},
-		"explore": {
-			name:        "explore",
-			description: "Explore a specific locations to find pokemon in the area",
-			callback:    commandExplore,
 		},
 		"exit": {
 			name:        "exit",
